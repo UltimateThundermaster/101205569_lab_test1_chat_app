@@ -1,0 +1,33 @@
+<div class="container mt-5">
+    <form id="register-form">
+    <div class="wrapper w-25 m-auto mt-2">
+        <h1 class="text-center">Register</h1>
+            <div class="form-group m-2 p-1">
+                <label for="firstname" class="form-label">First Name<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" placeholder="First Name" id="firstname" name="firstname">
+                <div class="error text-danger" id="firstname_error"></div>
+            </div>
+            <div class="form-group m-2 p-1">
+                <label for="lastname" class="form-label">Last Name<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" placeholder="Last Name" id="lastname" name="lastname">
+                <div class="error text-danger" id="lastname_error"></div>
+            </div>
+            <div class="form-group m-2 p-1">
+                <label for="username" class="form-label">Username<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" placeholder="Username" id="username" name="username">
+                <div class="error text-danger" id="username_error"></div>
+            </div>
+            <div class="form-group m-2 p-1">
+                <label for="password" class="form-label">Password<span class="text-danger">*</span></label>
+                <input type="password" class="form-control" placeholder="Password" id="password" name="password">
+                <div class="error text-danger" id="password_error"></div>
+            </div>
+            <div class="m-2 mt-3 p-1">
+                <button class="btn btn-primary w-100" type="submit">Register</button>
+            </div>
+            <p class="m-2 p-1">
+                Already have an account? <a href="/chat/auth/signin">Sign in</a>
+            </p>
+    </div>
+</form>
+</div>

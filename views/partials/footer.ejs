@@ -1,0 +1,257 @@
+<footer>
+  <script>
+    if (window.location.pathname === "/chat/auth/signin") {
+      const loginForm = document.getElementById("login-form");
+      const username = document.getElementById("username");
+      const password = document.getElementById("password");
+
+      const usernameError = document.getElementById("username_error");
+      const passwordError = document.getElementById("password_error");
+
+      validation(username, usernameError, "Username is required");
+      validation(password, passwordError, "Password is required");
+
+      // handle login submit form
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!username.value || !password.value) {
+          alert("Fields cannot be empty");
+          return;
+        }
+        try {
+          const response = await fetch("/chat/auth/signin", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: username.value,
+              password: password.value,
+            }),
+          });
+          const json = await response.json();
+          if (response.status === 400) {
+            alert(json.message);
+            return;
+          }
+          localStorage.setItem("token", json.token.access.token);
+          localStorage.setItem('user', JSON.stringify(json.user))
+          window.location.href = "/chat?token=" + json.token.access.token;
+        } catch (err) {
+          alert(err);
+        }
+      });
+    }
+
+    // handle register submit form
+    if (window.location.pathname === "/chat/auth/signup") {
+      const registerForm = document.getElementById("register-form");
+      const firstname = document.getElementById("firstname");
+      const lastname = document.getElementById("lastname");
+      const usernameError = document.getElementById("username_error");
+      const passwordError = document.getElementById("password_error");
+      const firstNameError = document.getElementById("firstname_error");
+      const lastNameError = document.getElementById("lastname_error");
+
+      validation(username, usernameError, "Username is required");
+      validation(password, passwordError, "Password is required");
+      validation(firstname, firstNameError, "First name is required");
+      validation(lastname, lastNameError, "Last name is required");
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (
+          !username.value ||
+          !password.value ||
+          !firstname.value ||
+          !lastname.value
+        ) {
+          alert("Fields cannot be empty");
+          return;
+        }
+        try {
+          const response = await fetch("/chat/auth/signup", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: username.value,
+              firstname: firstname.value,
+              lastname: lastname.value,
+              password: password.value,
+            }),
+          });
+          const json = await response.json();
+          if (response.status === 400) {
+            alert(json.message);
+            return;
+          }
+          window.location.href = "/chat/auth/signin";
+        } catch (err) {
+          alert(err);
+        }
+      });
+    }
+
+    if (window.location.pathname === "/chat") {
+      const roomName = document.getElementById("room-name");
+      const tokenId = document.getElementById("token_id");
+      const selectRoom = document.getElementById('select-room')
+      const chatJoinForm = document.getElementById("chat-join-form");
+
+      selectRoom.addEventListener('change', () => {
+        if(selectRoom.value !== '') 
+          roomName.value = selectRoom.value
+      })
+
+      chatJoinForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!roomName.value) {
+          alert("room name is required");
+          return;
+        }
+        window.location.href = `/chat/group?room=${
+          roomName.value
+        }&username=${JSON.parse(localStorage.getItem('user')).username}&token=${localStorage.getItem("token")}`;
+      });
+    }
+
+    if (
+      window.location.pathname !== "/chat/auth/signup" &&
+      window.location.pathname !== "/chat/auth/signin"
+    ) {
+      const logoutBtn = document.getElementById("logout-btn");
+      logoutBtn.hidden = false;
+      logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("token");
+        window.location.href = "/chat/auth/signin";
+      });
+    }
+
+    function validation(element, errorElement, message) {
+      element.addEventListener("focusout", () => {
+        if (element.value.trim() === "") {
+          errorElement.innerText = message;
+        }
+      });
+    }
+  </script>
+
+  <!-- chat script -->
+  <script>
+    if (window.location.pathname === "/chat/group") {
+      const chatForm = document.getElementById("chat-form");
+      const chatMessages = document.querySelector(".chat-messages");
+      const roomName = document.getElementById("room-name");
+      const userList = document.getElementById("users");
+
+      // Get username and room from URL
+      const { username, room } = Qs.parse(location.search, {
+        ignoreQueryPrefix: true,
+      });
+
+      const socket = io();
+
+      // Join chatroom
+      socket.emit("joinRoom", { username, room });
+
+      // Get room and users
+      socket.on("roomUsers", ({ room, users }) => {
+        outputRoomName(room);
+        outputUsers(users);
+      });
+
+      // Message from server
+      socket.on("message", (message) => {
+        outputMessage(message);
+
+        // Scroll down
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      });
+
+      // Message submit
+      chatForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Get message text
+        let msg = e.target.elements.msg.value;
+
+        msg = msg.trim();
+
+        if (!msg) {
+          return false;
+        }
+        socket.emit('typing', {username, typing:false})
+
+        // Emit message to server
+        socket.emit("chatMessage", msg);
+
+        // Clear input
+        e.target.elements.msg.value = "";
+        e.target.elements.msg.focus();
+      });
+
+    
+      // Output message to DOM
+      function outputMessage(message) {
+        const div = document.createElement("div");
+        div.classList.add("message");
+        const p = document.createElement("p");
+        p.classList.add("meta");
+        p.innerText = message.username;
+        p.innerHTML += `&nbsp;&nbsp;<span>${message.time}</span>`;
+        div.appendChild(p);
+        const para = document.createElement("p");
+        para.classList.add("text");
+        para.innerText = message.text;
+        div.appendChild(para);
+        document.querySelector(".chat-messages").appendChild(div);
+      }
+
+      // Add room name to DOM
+      function outputRoomName(room) {
+        roomName.innerText = room;
+      }
+
+      // Add users to DOM
+      function outputUsers(users) {
+        userList.innerHTML = "";
+        users.forEach((user) => {
+          const li = document.createElement("li");
+          li.innerText = user.username;
+          userList.appendChild(li);
+        });
+      }
+
+      //Prompt the user before leave chat room
+      document.getElementById("leave-btn").addEventListener("click", () => {
+        const leaveRoom = confirm(
+          "Are you sure you want to leave the chatroom?"
+        );
+        if (leaveRoom) {
+          window.location = `/chat?token=${localStorage.getItem('token')}`;
+        } else {
+        }
+      });
+
+      const msg = document.getElementById("msg")
+      msg.addEventListener('keypress', (e) => {
+        if(e.which != 13) {
+          socket.emit('typing', {username, typing: true})
+        }else {
+          socket.emit('typing', {username, typing:false})
+        }
+      })
+
+      socket.on('display', (data)=>{
+        if(data.typing==true){
+          document.getElementById('typing').innerText = `${data.username} is typing...`
+        }
+        else
+        document.getElementById('typing').innerText = ""
+      })
+    }
+  </script>
+</footer>

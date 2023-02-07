@@ -1,0 +1,36 @@
+<div class="chat-container">
+    <header class="chat-header">
+      <h1>Chat</h1>
+      <p id="typing"></p>
+      <a id="leave-btn" class="btn">Leave Room</a>
+    </header>
+    <main class="chat-main">
+      <div class="chat-sidebar">
+        <h3>Room Name:</h3>
+        <h2 id="room-name"></h2>
+        <h3>Users</h3>
+        <ul id="users">
+        </ul>
+      </div>
+      <div class="chat-messages">
+        <% for(let i = 0; i < messages.length; i++) { %>
+        <div class="message">
+          <p class="meta"><%= messages[i].from_user%>&nbsp;&nbsp;<span><%= messages[i].date_sent%></span></p>
+          <p class="text"><%= messages[i].message%></p>
+        </div>
+        <%}%>
+      </div>
+    </main>
+    <div class="chat-form-container">
+      <form id="chat-form">
+        <input
+          id="msg"
+          type="text"
+          placeholder="Enter Message"
+          required
+          autocomplete="off"
+        />
+        <button class="btn">Send</button>
+      </form>
+    </div>
+  </div>
